@@ -95,13 +95,40 @@ static async Task ProcessAsync()
         await download.Content.CopyToAsync(downloadFileStream);
     }
     Console.WriteLine("\nLocate the local file in the data directory created earlier to verify it was downloaded.");
-    Console.WriteLine("The next step is to delete the container and local files.");
+    Console.WriteLine("The next step is to Retrieve container propertoes");
     Console.WriteLine("Press 'Enter' to continue.");
     Console.ReadLine();
     /***********************************************************/     
 
+
+    /***********************************************************/    
+
     /***********************************************************/
-    /***********      Download blobs                 ***********/
+    /***********      Retrieve container properties  ***********/
+    /***********************************************************/
+    await ReadContainerPropertiesAsync(containerClient);
+
+    Console.WriteLine("\nLReadContainerPropertiesAsync success");
+    Console.WriteLine("The next step is to Add and Retrieve container MetaData");
+    Console.WriteLine("Press 'Enter' to continue.");
+    Console.ReadLine();    
+    /***********************************************************/    
+
+
+    /***********************************************************/
+    /***********      Set and retrieve metadata      ***********/
+    /***********************************************************/
+    await AddContainerMetadataAsync(containerClient);
+    await ReadContainerMetadataAsync(containerClient);    
+
+    Console.WriteLine("\nAddContainerMetadataAsync and  ReadContainerMetadataAsync success");
+    Console.WriteLine("The next step is to cleanup the container and local downloaded files");
+    Console.WriteLine("Press 'Enter' to continue.");
+    Console.ReadLine();   
+    /***********************************************************/   
+
+    /***********************************************************/
+    /***********      Cleanup delete container       ***********/
     /***********************************************************/
     // Delete the container and clean up local files created
     Console.WriteLine("\n\nDeleting blob container...");
@@ -113,5 +140,66 @@ static async Task ProcessAsync()
 
     Console.WriteLine("Finished cleaning up.");
 
-    /***********************************************************/    
+}
+
+static async Task ReadContainerPropertiesAsync(BlobContainerClient container)
+{
+    try
+    {
+        // Fetch some container properties and write out their values.
+        var properties = await container.GetPropertiesAsync();
+        Console.WriteLine($"Properties for container {container.Uri}");
+        Console.WriteLine($"Public access level: {properties.Value.PublicAccess}");
+        Console.WriteLine($"Last modified time in UTC: {properties.Value.LastModified}");
+    }
+    catch (Exception e)
+    {
+        //Console.WriteLine($"HTTP error code {e.Status}: {e.ErrorCode}");
+        Console.WriteLine(e.Message);
+        Console.ReadLine();
+    }
+}
+
+static async Task AddContainerMetadataAsync(BlobContainerClient container)
+{
+    try
+    {
+        IDictionary<string, string> metadata =
+           new Dictionary<string, string>();
+
+        // Add some metadata to the container.
+        metadata.Add("docType", "textDocuments");
+        metadata.Add("category", "guidance");
+
+        // Set the container's metadata.
+        await container.SetMetadataAsync(metadata);
+    }
+    catch (Exception e)
+    {
+        //Console.WriteLine($"HTTP error code {e.Status}: {e.ErrorCode}");
+        Console.WriteLine(e.Message);
+        Console.ReadLine();
+    }
+}
+
+static async Task ReadContainerMetadataAsync(BlobContainerClient container)
+{
+    try
+    {
+        var properties = await container.GetPropertiesAsync();
+
+        // Enumerate the container's metadata.
+        Console.WriteLine("Container metadata:");
+        foreach (var metadataItem in properties.Value.Metadata)
+        {
+            Console.WriteLine($"\tKey: {metadataItem.Key}");
+            Console.WriteLine($"\tValue: {metadataItem.Value}");
+        }
+    }
+    catch (Exception e)
+    {
+        //Console.WriteLine($"HTTP error code {e.Status}: {e.ErrorCode}");
+        Console.WriteLine(e.Message);
+        Console.ReadLine();
+    }
 }
